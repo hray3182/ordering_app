@@ -153,8 +153,8 @@ export default function MenuAdmin() {
             ))}
           </div>
 
-          {/* Menu Items Table */}
-          <div className="border-2 border-black overflow-hidden">
+          {/* Menu Items - Desktop Table */}
+          <div className="hidden lg:block border-2 border-black overflow-hidden">
             <table className="w-full">
               <thead className="bg-black text-white">
                 <tr>
@@ -215,6 +215,55 @@ export default function MenuAdmin() {
                 ))}
               </tbody>
             </table>
+            {filteredItems.length === 0 && <p className="text-center text-gray-600 py-8 font-medium">尚無餐點</p>}
+          </div>
+
+          {/* Menu Items - Mobile Cards */}
+          <div className="lg:hidden space-y-4">
+            {filteredItems.map((item) => (
+              <div key={item.id} className={`border-2 border-black p-4 ${!item.available ? 'bg-gray-100' : 'bg-white'}`}>
+                <div className="flex gap-4">
+                  {item.imagePath ? (
+                    <div className="relative w-20 h-20 border-2 border-black flex-shrink-0">
+                      <Image src={item.imagePath} alt={item.name} fill className="object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-200 border-2 border-black flex items-center justify-center text-gray-600 text-xs font-medium flex-shrink-0">
+                      無圖片
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-black text-lg mb-1">{item.name}</h3>
+                    {item.description && <p className="text-sm text-gray-600 mb-2">{item.description}</p>}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm text-gray-600">{getCategoryName(item.categoryId)}</span>
+                      <span className="text-xl font-bold text-black">${item.price}</span>
+                    </div>
+                    <span
+                      className={`inline-block px-2 py-1 border-2 border-black text-xs font-medium ${
+                        item.available ? 'bg-white text-black' : 'bg-black text-white'
+                      }`}
+                    >
+                      {item.available ? '可供應' : '停售'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => handleToggleAvailable(item)}
+                    className="flex-1 bg-white text-black px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm font-medium"
+                  >
+                    {item.available ? '停售' : '上架'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="flex-1 bg-white text-black px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-colors text-sm font-medium"
+                  >
+                    刪除
+                  </button>
+                </div>
+              </div>
+            ))}
             {filteredItems.length === 0 && <p className="text-center text-gray-600 py-8 font-medium">尚無餐點</p>}
           </div>
         </div>
