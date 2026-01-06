@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { orders, orderItems } from '@/db/schema';
 import { desc } from 'drizzle-orm';
+import { syncOrderToFirebase } from '@/lib/firebase';
+import { appendOrderToSheet } from '@/lib/googleSheets';
 
 // 生成 6 位數訂單號
 async function generateOrderNumber(): Promise<string> {
@@ -36,11 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 計算總金額
-    const total = items.reduce(
+    // 計算小計
+    const subtotal = items.reduce(
       (sum: number, item: any) => sum + item.price * item.quantity,
       0
     );
+
+    // 滿100打九折
+    const hasDiscount = subtotal >= 100;
+    const total = hasDiscount ? subtotal * 0.9 : subtotal;
 
     // 生成訂單號
     const orderNumber = await generateOrderNumber();
@@ -68,6 +74,31 @@ export async function POST(request: NextRequest) {
     }));
 
     await db.insert(orderItems).values(orderItemsData);
+
+    // 同步到外部服務（不阻塞主流程）
+    const orderData = {
+      id: orderId,
+      orderNumber,
+      status: 'pending' as const,
+      total,
+      paid: false,
+      createdAt: newOrder[0].createdAt,
+      items: orderItemsData.map((item: { menuItemName: string; quantity: number; price: number }) => ({
+        menuItemName: item.menuItemName,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    };
+
+    // 非同步同步，不等待結果
+    Promise.all([
+      syncOrderToFirebase(orderData).catch((err) =>
+        console.error('Firebase sync error:', err)
+      ),
+      appendOrderToSheet(orderData).catch((err) =>
+        console.error('Google Sheets sync error:', err)
+      ),
+    ]);
 
     return NextResponse.json(
       {

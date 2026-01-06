@@ -29,7 +29,7 @@ export default function Home() {
   const [showCart, setShowCart] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const { items, addItem, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
+  const { items, addItem, removeItem, updateQuantity, totalItems, totalPrice, discountedPrice, hasDiscount, clearCart } = useCart();
   const router = useRouter();
 
   useEffect(() => {
@@ -227,9 +227,23 @@ export default function Home() {
                 </div>
 
                 <div className="border-t-2 border-black pt-4 mt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">小計</span>
+                    <span className="text-gray-600">${totalPrice.toFixed(2)}</span>
+                  </div>
+                  {hasDiscount ? (
+                    <div className="flex justify-between items-center mb-2 text-green-600">
+                      <span>滿百九折優惠</span>
+                      <span>-${(totalPrice * 0.1).toFixed(2)}</span>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 mb-2">
+                      再消費 ${(100 - totalPrice).toFixed(2)} 即可享九折優惠
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-xl font-bold mb-4">
                     <span className="text-black">總計</span>
-                    <span className="text-black">${totalPrice.toFixed(2)}</span>
+                    <span className="text-black">${discountedPrice.toFixed(2)}</span>
                   </div>
                   <button
                     onClick={handleCheckout}

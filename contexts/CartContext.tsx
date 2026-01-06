@@ -18,6 +18,8 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  discountedPrice: number;
+  hasDiscount: boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -74,6 +76,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const hasDiscount = totalPrice >= 100;
+  const discountedPrice = hasDiscount ? totalPrice * 0.9 : totalPrice;
 
   return (
     <CartContext.Provider
@@ -85,6 +89,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         totalItems,
         totalPrice,
+        discountedPrice,
+        hasDiscount,
       }}
     >
       {children}

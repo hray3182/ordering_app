@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { orders, orderItems, menuItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { updateOrderInFirebase } from '@/lib/firebase';
+import { updateOrderInSheet } from '@/lib/googleSheets';
 
 // GET - 取得單一訂單及其明細
 export async function GET(
@@ -76,6 +78,21 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    // 同步到外部服務（不阻塞主流程）
+    const orderNumber = updated[0].orderNumber;
+    const syncUpdates: { status?: string; paid?: boolean } = {};
+    if (status !== undefined) syncUpdates.status = status;
+    if (paid !== undefined) syncUpdates.paid = paid;
+
+    Promise.all([
+      updateOrderInFirebase(orderNumber, syncUpdates).catch((err) =>
+        console.error('Firebase update error:', err)
+      ),
+      updateOrderInSheet(orderNumber, syncUpdates).catch((err) =>
+        console.error('Google Sheets update error:', err)
+      ),
+    ]);
 
     return NextResponse.json(updated[0]);
   } catch (error) {

@@ -110,10 +110,28 @@ export default function OrderPage() {
 
           {/* Total */}
           <div className="border-t-2 border-black pt-4 mb-6">
-            <div className="flex justify-between items-center text-xl font-bold">
-              <span className="text-black">總計</span>
-              <span className="text-black">${order.total.toFixed(2)}</span>
-            </div>
+            {(() => {
+              const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+              const hasDiscount = subtotal > order.total;
+              return (
+                <>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-600">小計</span>
+                    <span className="text-gray-600">${subtotal.toFixed(2)}</span>
+                  </div>
+                  {hasDiscount && (
+                    <div className="flex justify-between items-center mb-2 text-green-600">
+                      <span>滿百九折優惠</span>
+                      <span>-${(subtotal - order.total).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-xl font-bold">
+                    <span className="text-black">總計</span>
+                    <span className="text-black">${order.total.toFixed(2)}</span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Payment Status */}
